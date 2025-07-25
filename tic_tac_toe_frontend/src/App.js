@@ -330,7 +330,7 @@ function ModeSelector({ mode, onModeChange, humanMarker, onMarkerChange, aiMarke
             value="ai"
             checked={mode === "ai"}
             onChange={onModeChange}
-          /> Play vs AI
+          /> Computer
         </label>
       </fieldset>
       {mode === "ai" && (
