@@ -58,6 +58,19 @@ function getRandomMove(squares) {
 }
 
 /**
+ * AI move selector.
+ * Supports future extension: different strategies by difficulty level.
+ */
+function getAIMove(squares, difficulty, aiMarker) {
+  // 'easy': always random. 'medium' and 'hard' behave like 'easy' for now.
+  // Future: Use smarter algorithms for 'medium'/'hard'
+  if (difficulty === "easy" || difficulty === "medium" || difficulty === "hard") {
+    return getRandomMove(squares);
+  }
+  return getRandomMove(squares);
+}
+
+/**
  * Can be enhanced: implement minimax in future for 'hard' mode.
  */
 
@@ -65,6 +78,8 @@ function getRandomMove(squares) {
 function App() {
   // Game mode: 'pvp' or 'ai'
   const [mode, setMode] = useState("pvp");
+  // Complexity: "easy", "medium", "hard"
+  const [complexity, setComplexity] = useState("easy");
   // If AI mode: which marker does human play? "X" or "O"
   const [humanMarker, setHumanMarker] = useState("X");
   // Board is an array of 9: null|"X"|"O"
@@ -83,11 +98,13 @@ function App() {
   const xIsNextRef = useRef(xIsNext);
   const modeRef = useRef(mode);
   const humanMarkerRef = useRef(humanMarker);
+  const complexityRef = useRef(complexity);
 
   useEffect(() => { boardRef.current = board; }, [board]);
   useEffect(() => { xIsNextRef.current = xIsNext; }, [xIsNext]);
   useEffect(() => { modeRef.current = mode; }, [mode]);
   useEffect(() => { humanMarkerRef.current = humanMarker; }, [humanMarker]);
+  useEffect(() => { complexityRef.current = complexity; }, [complexity]);
 
   // Reset the game to the initial state
   // PUBLIC_INTERFACE
@@ -98,6 +115,13 @@ function App() {
     setWinLine([]);
     setAiThinking(false);
   };
+
+  // PUBLIC_INTERFACE
+  // Update complexity selection
+  function handleComplexityChange(e) {
+    setComplexity(e.target.value);
+    resetGame();
+  }
 
   // PUBLIC_INTERFACE
   // Handle Square Click by player (human)
@@ -138,7 +162,8 @@ function App() {
       setAiThinking(true);
       // Wait 550ms for "AI thinking" effect
       const aiTimeout = setTimeout(() => {
-        const move = getRandomMove(boardRef.current);
+        // Use selected complexity for AI move selection
+        const move = getAIMove(boardRef.current, complexityRef.current, xIsNextRef.current ? "X" : "O");
         if (move != null && !calculateWinner(boardRef.current)) {
           const newBoard = boardRef.current.slice();
           newBoard[move] = xIsNextRef.current ? "X" : "O";
@@ -153,7 +178,7 @@ function App() {
     }
     setAiThinking(false);
   // eslint-disable-next-line
-  }, [mode, board, xIsNext, outcome, humanMarker]);
+  }, [mode, board, xIsNext, outcome, humanMarker, complexity]);
 
   // Mode selection and allow AI player marker selection
   function handleModeChange(e) {
@@ -263,6 +288,13 @@ function App() {
             onMarkerChange={handleMarkerChange}
             aiMarker={humanMarker === "X" ? "O" : "X"}
           />
+          {/* Complexity/Difficulty selection only in AI mode */}
+          {mode === "ai" && (
+            <ComplexitySelector
+              value={complexity}
+              onChange={handleComplexityChange}
+            />
+          )}
           <div className="status-bar" data-testid="status-bar">{status}</div>
           <Board
             squares={board}
@@ -366,6 +398,57 @@ function ModeSelector({ mode, onModeChange, humanMarker, onMarkerChange, aiMarke
 
 
 
+
+
+// PUBLIC_INTERFACE
+function ComplexitySelector({ value, onChange }) {
+  /**
+   * UI control for selecting complexity (difficulty) for AI.
+   * integrated with light, modern style; options: easy, medium, hard
+   */
+  return (
+    <fieldset
+      style={{
+        border: "none",
+        padding: 0,
+        margin: "0 0 0.7em 0",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: "0.8rem"
+      }}
+    >
+      <legend
+        style={{
+          fontWeight: 600,
+          fontSize: "1.05em",
+          color: "var(--primary)",
+          marginRight: 2,
+          marginBottom: 0,
+        }}
+      >Difficulty:</legend>
+      <select
+        aria-label="Select game difficulty"
+        value={value}
+        onChange={onChange}
+        style={{
+          fontSize: "1.03em",
+          padding: "0.28em 1em 0.28em 0.65em",
+          borderRadius: "5px",
+          border: "1.6px solid var(--border-main)",
+          fontWeight: 600,
+          color: "var(--secondary)",
+          background: "var(--bg-card)",
+          boxShadow: "0 1px 5px rgba(25, 118, 210, 0.08)"
+        }}
+      >
+        <option value="easy">Easy (Random)</option>
+        <option value="medium">Medium</option>
+        <option value="hard">Hard</option>
+      </select>
+    </fieldset>
+  );
+}
 
 
 // PUBLIC_INTERFACE
